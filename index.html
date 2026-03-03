@@ -7,7 +7,7 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
         .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; }
         .header h1 { font-size: 24px; margin-bottom: 10px; }
         .form-content { padding: 30px; }
@@ -16,14 +16,20 @@
         input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
         input:focus, select:focus { outline: none; border-color: #f5576c; }
         .btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
-        .success-message { display: none; background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
-        .error-message { display: none; background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .success-message { display: none; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 40px; border-radius: 15px; margin: 20px; text-align: center; }
+        .success-message h3 { font-size: 28px; margin-bottom: 10px; }
+        .success-message p { font-size: 16px; opacity: 0.9; }
+        .error-message { display: none; background: #ff6b6b; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
         .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }
-        .loading { opacity: 0.6; pointer-events: none; }
+        .loading { position: relative; }
+        .loading::after { content: ''; position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .debug { background: #f0f0f0; padding: 10px; margin-top: 10px; font-size: 12px; display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" id="mainContainer">
         <div class="header">
             <h1>🏠 GOTONG ROYONG MADANI</h1>
             <p>Tarikh: 19 Oktober 2026</p>
@@ -89,21 +95,26 @@
                 <label for="sumbangan">Nilai/Rincian</label>
                 <input type="text" id="sumbangan" name="sumbangan">
             </div>
-            <button type="submit" class="btn" id="submitBtn">Hantar Borang ✅</button>
+            <button type="submit" class="btn" id="submitBtn">Hantar Borang 📝</button>
+            <div class="debug" id="debug"></div>
         </form>
-        <div class="success-message" id="successMessage">
-            <h3>✅ Berjaya!</h3>
-            <p>Maklumat anda telah direkod.</p>
-        </div>
         <div class="error-message" id="errorMessage">
             <h3>❌ Ralat!</h3>
             <p id="errorText">Maaf, berlaku ralat. Sila cuba lagi.</p>
         </div>
         <div class="footer">
             <p>SK Masjid Tanah (Integrasi)</p>
-            <p>DB: c9acf080-39c3-4e4c-ba95-39c2e806f270</p>
         </div>
     </div>
+
+    <!-- Success Popup -->
+    <div class="success-message" id="successMessage">
+        <h3>🎉 TERIMA KASIH!</h3>
+        <p> Maklumat anda telah berjaya disimpan.</p>
+        <p style="margin-top: 20px; font-size: 14px;">No. IC: <strong id="confirm_ic"></strong></p>
+        <p>Nama: <strong id="confirm_nama"></strong></p>
+    </div>
+
     <script>
         // Show/hide sumbangan field
         document.getElementById('sumbangan_type').addEventListener('change', function() {
@@ -115,43 +126,57 @@
             e.preventDefault();
             
             const btn = document.getElementById('submitBtn');
+            const form = document.getElementById('attendanceForm');
+            const debug = document.getElementById('debug');
+            
+            btn.disabled = true;
             btn.classList.add('loading');
             btn.textContent = 'Menghantar...';
             
-            const formData = new FormData(this);
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
             
-            // Insert into D1 using REST API
+            // D1 credentials
             const D1_DB_ID = 'c9acf080-39c3-4e4c-ba95-39c2e806f270';
             const ACCOUNT_ID = '3cc808af04ffee93fa6b37664117177c';
+            const API_TOKEN = 'iNZbOmv5txx08ahAa6IESLhRGRgZm91bri8Jp_N0';
             
-            const sql = `INSERT INTO kehadiran (nama, no_ic, no_tel, alamat, jantina, kaum, pekerjaan, hadir, sumbangan_type, sumbangan) VALUES ('${data.nama}', '${data.no_ic || ''}', '${data.no_tel || ''}', '${data.alamat || ''}', '${data.jantina}', '${data.kaum}', '${data.pekerjaan || ''}', '${data.hadir}', '${data.sumbangan_type}', '${data.sumbangan || ''}')`;
+            const sql = `INSERT INTO kehadiran (nama, no_ic, no_tel, alamat, jantina, kaum, pekerjaan, hadir, sumbangan_type, sumbangan) VALUES ('${data.nama.replace(/'/g, "''")}', '${(data.no_ic || '').replace(/'/g, "''")}', '${(data.no_tel || '').replace(/'/g, "''")}', '${(data.alamat || '').replace(/'/g, "''")}', '${data.jantina}', '${data.kaum}', '${(data.pekerjaan || '').replace(/'/g, "''")}', '${data.hadir}', '${data.sumbangan_type}', '${(data.sumbangan || '').replace(/'/g, "''")}')`;
+            
+            debug.style.display = 'block';
+            debug.textContent = 'Sending to D1...';
             
             try {
-                const response = await fetch(\`https://api.cloudflare.com/client/v4/accounts/\${ACCOUNT_ID}/d1/database/\${D1_DB_ID}/query\`, {
+                const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${D1_DB_ID}/query`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': 'Bearer iNZbOmv5txx08ahAa6IESLhRGRgZm91bri8Jp_N0',
+                        'Authorization': 'Bearer ' + API_TOKEN,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ sql: sql })
                 });
                 
                 const result = await response.json();
+                debug.textContent = 'Response: ' + JSON.stringify(result);
                 
                 if (result.success) {
-                    this.style.display = 'none';
+                    // Show success message
+                    document.getElementById('mainContainer').style.display = 'none';
+                    document.getElementById('confirm_nama').textContent = data.nama;
+                    document.getElementById('confirm_ic').textContent = data.no_ic;
                     document.getElementById('successMessage').style.display = 'block';
                 } else {
                     throw new Error(result.errors?.[0]?.message || 'Insert failed');
                 }
             } catch (error) {
                 console.error('Error:', error);
+                debug.textContent = 'Error: ' + error.message;
                 document.getElementById('errorText').textContent = error.message;
                 document.getElementById('errorMessage').style.display = 'block';
             } finally {
+                btn.disabled = false;
                 btn.classList.remove('loading');
-                btn.textContent = 'Hantar Borang ✅';
+                btn.textContent = 'Hantar Borang 📝';
             }
         });
     </script>
