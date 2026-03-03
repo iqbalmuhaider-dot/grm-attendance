@@ -1,0 +1,8 @@
+name = "grm-attendance"
+compatibility_date = "2026-03-03"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "grm-attendance"
+database_id = "c9acf080-39c3-4e4c-ba95-39c2e806f270"

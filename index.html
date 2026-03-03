@@ -17,7 +17,9 @@
         input:focus, select:focus { outline: none; border-color: #f5576c; }
         .btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
         .success-message { display: none; background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
+        .error-message { display: none; background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
         .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }
+        .loading { opacity: 0.6; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -87,24 +89,70 @@
                 <label for="sumbangan">Nilai/Rincian</label>
                 <input type="text" id="sumbangan" name="sumbangan">
             </div>
-            <button type="submit" class="btn">Hantar Borang ✅</button>
+            <button type="submit" class="btn" id="submitBtn">Hantar Borang ✅</button>
         </form>
         <div class="success-message" id="successMessage">
             <h3>✅ Berjaya!</h3>
             <p>Maklumat anda telah direkod.</p>
         </div>
+        <div class="error-message" id="errorMessage">
+            <h3>❌ Ralat!</h3>
+            <p id="errorText">Maaf, berlaku ralat. Sila cuba lagi.</p>
+        </div>
         <div class="footer">
             <p>SK Masjid Tanah (Integrasi)</p>
+            <p>DB: c9acf080-39c3-4e4c-ba95-39c2e806f270</p>
         </div>
     </div>
     <script>
+        // Show/hide sumbangan field
         document.getElementById('sumbangan_type').addEventListener('change', function() {
             document.getElementById('sumbangan_group').style.display = this.value !== 'tiada' ? 'block' : 'none';
         });
-        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+        
+        // Handle form submission
+        document.getElementById('attendanceForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            this.style.display = 'none';
-            document.getElementById('successMessage').style.display = 'block';
+            
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('loading');
+            btn.textContent = 'Menghantar...';
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Insert into D1 using REST API
+            const D1_DB_ID = 'c9acf080-39c3-4e4c-ba95-39c2e806f270';
+            const ACCOUNT_ID = '3cc808af04ffee93fa6b37664117177c';
+            
+            const sql = `INSERT INTO kehadiran (nama, no_ic, no_tel, alamat, jantina, kaum, pekerjaan, hadir, sumbangan_type, sumbangan) VALUES ('${data.nama}', '${data.no_ic || ''}', '${data.no_tel || ''}', '${data.alamat || ''}', '${data.jantina}', '${data.kaum}', '${data.pekerjaan || ''}', '${data.hadir}', '${data.sumbangan_type}', '${data.sumbangan || ''}')`;
+            
+            try {
+                const response = await fetch(\`https://api.cloudflare.com/client/v4/accounts/\${ACCOUNT_ID}/d1/database/\${D1_DB_ID}/query\`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer iNZbOmv5txx08ahAa6IESLhRGRgZm91bri8Jp_N0',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sql: sql })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.style.display = 'none';
+                    document.getElementById('successMessage').style.display = 'block';
+                } else {
+                    throw new Error(result.errors?.[0]?.message || 'Insert failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('errorText').textContent = error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            } finally {
+                btn.classList.remove('loading');
+                btn.textContent = 'Hantar Borang ✅';
+            }
         });
     </script>
 </body>
