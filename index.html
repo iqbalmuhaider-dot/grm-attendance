@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borang Kehadiran Gotong Royong Madani</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        .form-content { padding: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+        input:focus, select:focus { outline: none; border-color: #f5576c; }
+        .btn { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+        .success-message { display: none; background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 GOTONG ROYONG MADANI</h1>
+            <p>Tarikh: 19 Oktober 2026</p>
+        </div>
+        <form class="form-content" id="attendanceForm">
+            <div class="form-group">
+                <label for="nama">Nama Penuh *</label>
+                <input type="text" id="nama" name="nama" required>
+            </div>
+            <div class="form-group">
+                <label for="no_ic">No. IC *</label>
+                <input type="text" id="no_ic" name="no_ic" required maxlength="12">
+            </div>
+            <div class="form-group">
+                <label for="no_tel">No. Telefon</label>
+                <input type="tel" id="no_tel" name="no_tel">
+            </div>
+            <div class="form-group">
+                <label for="alamat">Alamat</label>
+                <textarea id="alamat" name="alamat" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="jantina">Jantina *</label>
+                <select id="jantina" name="jantina" required>
+                    <option value="">-- Sila Pilih --</option>
+                    <option value="lelaki">Lelaki</option>
+                    <option value="perempuan">Perempuan</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="kaum">Kaum *</label>
+                <select id="kaum" name="kaum" required>
+                    <option value="">-- Sila Pilih --</option>
+                    <option value="melayu">Melayu</option>
+                    <option value="cina">Cina</option>
+                    <option value="india">India</option>
+                    <option value="lain">Lain-Lain</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="pekerjaan">Pekerjaan</label>
+                <input type="text" id="pekerjaan" name="pekerjaan">
+            </div>
+            <div class="form-group">
+                <label for="hadir">Status Kehadiran *</label>
+                <select id="hadir" name="hadir" required>
+                    <option value="">-- Sila Pilih --</option>
+                    <option value="hadir">HADIR</option>
+                    <option value="tidak_hadir">TIDAK HADIR</option>
+                    <option value="tidak_yakin">TIDAK YAKIN</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sumbangan_type">Jenis Sumbangan</label>
+                <select id="sumbangan_type" name="sumbangan_type">
+                    <option value="tiada">Tiada</option>
+                    <option value="wang">Wang (RM)</option>
+                    <option value="barang">Barang</option>
+                    <option value="tenaga">Tenaga (Labor)</option>
+                </select>
+            </div>
+            <div class="form-group" id="sumbangan_group" style="display:none;">
+                <label for="sumbangan">Nilai/Rincian</label>
+                <input type="text" id="sumbangan" name="sumbangan">
+            </div>
+            <button type="submit" class="btn">Hantar Borang ✅</button>
+        </form>
+        <div class="success-message" id="successMessage">
+            <h3>✅ Berjaya!</h3>
+            <p>Maklumat anda telah direkod.</p>
+        </div>
+        <div class="footer">
+            <p>SK Masjid Tanah (Integrasi)</p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('sumbangan_type').addEventListener('change', function() {
+            document.getElementById('sumbangan_group').style.display = this.value !== 'tiada' ? 'block' : 'none';
+        });
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            this.style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
